@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# {{ Add feeds
+cat >> friendlywrt/feeds.conf.default <<EOL
+src-git passwall https://github.com/xiaorouji/openwrt-passwall;main
+src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages;main
+EOL
+# }}
+
+
 # {{ Add luci-app-diskman
 (cd friendlywrt && {
     mkdir -p package/luci-app-diskman

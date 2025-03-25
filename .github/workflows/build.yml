@@ -1,4 +1,7 @@
+name: FriendlyWrt Builder
 on:
+  repository_dispatch:
+  workflow_dispatch:      
   watch:
     types: started
 jobs:
@@ -31,8 +34,8 @@ jobs:
     if: github.event.repository.owner.id == github.event.sender.id
     strategy:
       matrix:
-        VERSION: ['23.05', '24.10']
-        SET: [docker, non-docker]
+        VERSION: ['24.10']
+        SET: [docker]
 
     steps:
     - name: Checkout
@@ -64,7 +67,7 @@ jobs:
         mkdir project
         cd project
         repo init --depth=1 -u https://github.com/friendlyarm/friendlywrt_manifests -b master-v${{ matrix.VERSION }} \
-                -m rk3399.xml --repo-url=https://github.com/friendlyarm/repo  --no-clone-bundle
+                -m rk3588.xml --repo-url=https://github.com/friendlyarm/repo  --no-clone-bundle
 
         repo sync -c friendlywrt --no-clone-bundle
         repo sync -c configs --no-clone-bundle
@@ -87,11 +90,15 @@ jobs:
         DIRNAME=friendlywrt$(echo ${{ matrix.VERSION }}|awk -F . '{print $1}')${SUFFIX}
         CONFIG=rockchip${SUFFIX}
         cat > .current_config.mk <<EOL
-        . device/friendlyelec/rk3399/base.mk
+        . device/friendlyelec/rk3588/base.mk
         TARGET_IMAGE_DIRNAME=${DIRNAME}
         TARGET_FRIENDLYWRT_CONFIG=${CONFIG}
         EOL
         DEBUG_DOT_CONFIG=1 ./build.sh friendlywrt
+        cp -f ../scripts/t6.config friendlywrt/.config
+        echo $(ls -a ../scripts/)
+        echo $(pwd)
+        echo $(ls -a friendlywrt)
 
     - name: Download package
       run: |
@@ -102,17 +109,11 @@ jobs:
 
     - name: Compile friendlyWrt
       id: compile
-      continue-on-error: true
+      continue-on-error: false
       run: |
         cd project/friendlywrt
         make -j$(nproc) || make -j1 V=s
         echo $?
-
-    - name: Check the result and try again
-      if: steps.compile.outcome == 'failure'
-      run: |
-        cd project/friendlywrt
-        make -j1 V=s
 
     - name: Create rootfs package
       id: create_rootfs_package
@@ -141,9 +142,9 @@ jobs:
 
     strategy:
       matrix:
-        VERSION: ['23.05', '24.10']
-        CPU: [rk3328, rk3528, rk3399, rk3566, rk3568, rk3588]
-        SET: [docker, non-docker]
+        VERSION: ['24.10']
+        CPU: [rk3588]
+        SET: [docker]
     steps:
     - name: Checkout
       uses: actions/checkout@main
@@ -186,16 +187,6 @@ jobs:
         repo sync -c scripts/sd-fuse  --no-clone-bundle
         repo sync -c toolchain  --no-clone-bundle
 
-    - name: Download friendlywrt rootfs (non-docker)
-      if: matrix.SET == 'non-docker'
-      uses: robinraju/release-downloader@v1.6
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        repository: ${{ github.repository }}
-        tag: ${{ needs.prepare_release.outputs.release_tag }}
-        fileName: "rootfs-friendlywrt-${{ matrix.VERSION }}.tgz"
-
     - name: Download friendlywrt rootfs (docker)
       if: matrix.SET == 'docker'
       uses: robinraju/release-downloader@v1.6
@@ -211,23 +202,11 @@ jobs:
       run: |
         cd project
         case ${{ matrix.CPU }} in
-        rk3328)
-          MODEL=R2S-R2C-Series
-          ;;
-        rk3528)
-          MODEL=NanoPi-Zero2
-          ;;
-        rk3399)
-          MODEL=R4S-Series
-          ;;
-        rk3568)
-          MODEL=R5S-R5C-Series
-          ;;
         rk3566)
           MODEL=R3S-Series
           ;;
         rk3588)
-          MODEL=T6-R6S-R6C-M6-Series
+          MODEL=T6-Series
           ;;
         *)
           echo "unknow cpu"
@@ -245,6 +224,10 @@ jobs:
         TARGET_SD_RAW_FILENAME=${FILENAME}
         EOL
         echo "##[set-output name=img_filename;]$FILENAME"
+        cp -f ../scripts/t6.config friendlywrt/.config
+        echo $(ls -a ../scripts/)
+        echo $(pwd)
+        echo $(ls -a friendlywrt)
 
     - name: Unpack friendlywrt rootfs
       run: |
