@@ -224,10 +224,6 @@ jobs:
         TARGET_SD_RAW_FILENAME=${FILENAME}
         EOL
         echo "##[set-output name=img_filename;]$FILENAME"
-        cp -f ../scripts/t6.config friendlywrt/.config
-        echo $(ls -a ../scripts/)
-        echo $(pwd)
-        echo $(ls -a friendlywrt)
 
     - name: Unpack friendlywrt rootfs
       run: |
