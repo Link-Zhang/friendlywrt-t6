@@ -96,6 +96,7 @@ jobs:
         EOL
         DEBUG_DOT_CONFIG=1 ./build.sh friendlywrt
         cp -f ../scripts/t6.config friendlywrt/.config
+        cp -f ../scripts/setup.sh friendlywrt/target/linux/rockchip/armv8/base-files/root/setup.sh
         echo $(ls -a ../scripts/)
         echo $(pwd)
         echo $(ls -a friendlywrt)
