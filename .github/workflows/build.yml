@@ -97,6 +97,7 @@ jobs:
         DEBUG_DOT_CONFIG=1 ./build.sh friendlywrt
         cp -f ../scripts/t6.config friendlywrt/.config
         cp -f ../scripts/setup.sh friendlywrt/target/linux/rockchip/armv8/base-files/root/setup.sh
+        cp -f ../scripts/banner friendlywrt/target/linux/rockchip/armv8/base-files/etc/banner
         echo $(ls -a ../scripts/)
         echo $(pwd)
         echo $(ls -a friendlywrt)
@@ -203,11 +204,8 @@ jobs:
       run: |
         cd project
         case ${{ matrix.CPU }} in
-        rk3566)
-          MODEL=R3S-Series
-          ;;
         rk3588)
-          MODEL=T6-Series
+          MODEL=NanoPC-T6
           ;;
         *)
           echo "unknow cpu"
